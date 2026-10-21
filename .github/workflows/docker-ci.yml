@@ -1,0 +1,19 @@
+name: Backend Docker CI
+
+on:
+    pull_request:
+        branches:
+            - main
+jobs:
+    docker-build:
+        name: Build Docker image
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+            uses: actions/checkout@v4
+
+            - name: Build Docker image
+            run: docker build -t backend-ci .
+
+            
