@@ -1,9 +1,13 @@
-name: Backend Docker CI
+name: Backend CI
 
 on:
     pull_request:
         branches:
             - main
+
+permissions:
+    contents: read
+    
 jobs:
     docker-build:
         name: Build Docker image
