@@ -30,7 +30,7 @@ jobs:
         run: echo "${{secrets.GITHUB_TOKEN}}" | docker login "$REGISTRY" -u "${{github.actor}}" --password-stdin
 
       - name: Build Docker Image
-        run: docker build -t "$IMAGE:${{ github.sha }}" .
+        run: docker build -t "$IMAGE_ID:${{ github.sha }}" .
 
       - name: Push Docker Image
         run: docker push "$IMAGE_ID:${{github.sha}}"
