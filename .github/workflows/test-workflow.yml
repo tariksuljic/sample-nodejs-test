@@ -1,4 +1,4 @@
-
+name: Commit title validation
 on:
   push:
     branches:
