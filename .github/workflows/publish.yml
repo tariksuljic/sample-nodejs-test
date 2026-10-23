@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 env:
@@ -21,12 +21,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up image name
         id: image
         run: |
           echo "image_id=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -37,7 +39,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and publish SHA image
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -45,3 +47,26 @@ jobs:
           tags: ${{ steps.image.outputs.image_id }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          sbom: true
+          provenance: mode=max
+
+      - name: Determine semantic version
+        id: release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 24
+          extra_plugins: |
+            conventional-changelog-conventionalcommits
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag image with semantic version
+        if: steps.release.outputs.new_release_published == 'true'
+        env:
+          IMAGE_ID: ${{ steps.image.outputs.image_id }}
+          RELEASE_VERSION: ${{ steps.release.outputs.new_release_version }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          docker buildx imagetools create \
+            --tag "${IMAGE_ID}:${RELEASE_VERSION}" \
+            "${IMAGE_ID}:${COMMIT_SHA}"
